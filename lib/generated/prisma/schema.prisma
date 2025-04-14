@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Test model to verify our setup
+model Test {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Department model
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users User[]
+
+  // Indexes
+  @@index([name])
+}
+
+// User model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(EMPLOYEE)
+  password  String // Hashed password
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  department   Department? @relation(fields: [departmentId], references: [id])
+  departmentId String?
+
+  // Self-relation for manager-employee relationship
+  manager   User?   @relation("ManagerToEmployee", fields: [managerId], references: [id])
+  managerId String?
+  employees User[]  @relation("ManagerToEmployee")
+
+  // Other relations
+  timeOffRequests TimeOffRequest[] @relation("UserToTimeOffRequest")
+  timeOffReviews  TimeOffRequest[] @relation("ReviewerToTimeOffRequest")
+  timeOffBalances TimeOffBalance[]
+
+  // Indexes
+  @@index([email])
+  @@index([departmentId])
+  @@index([managerId])
+}
+
+// Enum for user roles
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+// TimeOffRequest model
+model TimeOffRequest {
+  id         String        @id @default(uuid())
+  type       TimeOffType
+  status     RequestStatus @default(PENDING)
+  startDate  DateTime
+  endDate    DateTime
+  duration   Float // Number of days (can be decimal for half days)
+  notes      String?
+  reviewedAt DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relations
+  user       User             @relation("UserToTimeOffRequest", fields: [userId], references: [id])
+  userId     String
+  reviewer   User?            @relation("ReviewerToTimeOffRequest", fields: [reviewerId], references: [id])
+  reviewerId String?
+  comments   RequestComment[]
+
+  // Indexes
+  @@index([userId])
+  @@index([reviewerId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([type])
+}
+
+// RequestComment model for comments on time off requests
+model RequestComment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  timeOffRequest TimeOffRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId      String
+
+  // Indexes
+  @@index([requestId])
+}
+
+// TimeOffBalance model
+model TimeOffBalance {
+  id             String      @id @default(uuid())
+  year           Int // The year this balance applies to
+  type           TimeOffType
+  initialDays    Float // Starting balance
+  usedDays       Float // How many days have been used
+  adjustmentDays Float       @default(0) // Manual adjustments (positive or negative)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  // Constraints
+  @@unique([userId, year, type]) // Each user can have only one balance per type per year
+  // Indexes
+  @@index([userId])
+  @@index([year])
+  @@index([type])
+}
+
+// Enum for time off types
+enum TimeOffType {
+  VACATION
+  SICK
+  PERSONAL
+}
+
+// Enum for request status
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}

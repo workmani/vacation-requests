@@ -1,0 +1,186 @@
+# Overview
+The Vacation Request Application is a web-based platform that enables employees to submit time off requests which managers can review, approve, or deny. It streamlines the time off management process by providing a centralized system for tracking and managing employee vacation time.
+
+# Core Features
+1. **User Authentication (Microsoft Entra)**
+   - Secure login for employees and managers
+   - Role-based access control (employee vs. manager views)
+   - Integration with Microsoft Entra (formerly Azure AD)
+
+2. **Time Off Request Submission**
+   - Form for submitting date ranges, reason, and type of time off
+   - Calendar visualization for selecting dates
+   - Validation for available time off balance
+   - Support for different time off types (vacation, sick, personal, etc.)
+
+3. **Request Management**
+   - Dashboard for employees to view their request history and status
+   - Manager interface for reviewing pending requests
+   - Approval/denial workflow with optional comments
+   - Email notifications for status changes
+
+4. **Time Off Balance Tracking**
+   - Display of available time off balances by category
+   - Automatic balance updates based on approved requests
+   - Year-end rollover policies
+
+5. **Reporting and Analytics**
+   - Calendar view of team availability
+   - Reports on time off usage patterns
+   - Export functionality for HR purposes
+
+# User Experience
+**User Personas:**
+- **Regular Employee:** Needs to request time off and track balances
+- **Manager:** Reviews and manages team members' requests
+- **HR Administrator:** Configures policies and generates reports
+
+**Key User Flows:**
+- Employee submits a new time off request
+- Manager receives notification and reviews request
+- Employee receives approval/denial notification
+- HR runs reports on time off usage
+
+**UI/UX Considerations:**
+- Responsive design for mobile and desktop use
+- Intuitive calendar interface for date selection
+- Clear status indicators for request progress
+- Accessible design for all users
+
+# Technical Architecture
+## System Components
+- **Frontend:** Next.js with React and TypeScript
+- **UI Framework:** Tailwind CSS with shadcn/ui components
+- **Backend:** Next.js API routes
+- **Database:** SQL database (PostgreSQL) for user data, requests, and configurations
+- **Authentication:** Microsoft Entra (Azure AD) integration
+- **Email Service:** Integration with SMTP service for notifications
+
+## Data Models
+1. **User**
+   - Basic info (name, email, department)
+   - Role (employee, manager, admin)
+   - Manager relationship
+   - Time off balances by category
+
+2. **TimeOffRequest**
+   - Start/end dates
+   - Type of time off
+   - Status (pending, approved, denied)
+   - Comments
+   - Timestamps for creation and updates
+
+3. **TimeOffBalance**
+   - User relationship
+   - Balance categories (vacation, sick, personal)
+   - Accrual records
+   - Used and remaining balances
+
+4. **Department**
+   - Name
+   - Manager
+   - Members
+
+## API Routes
+- `/api/auth/*` - Authentication endpoints
+- `/api/requests` - CRUD operations for time off requests
+- `/api/users` - User management
+- `/api/balances` - Time off balance operations
+- `/api/departments` - Department management
+- `/api/reports` - Reporting endpoints
+
+## Infrastructure
+- Vercel deployment
+- PostgreSQL database
+- Microsoft Entra for authentication
+- Email delivery service
+
+# Development Roadmap
+## Phase 1: Foundation & MVP
+1. Project setup with Next.js, TypeScript, and Tailwind CSS
+2. Database schema design and implementation
+3. Microsoft Entra authentication integration
+4. Basic user management and role definition
+5. Simple time off request form and submission process
+6. Basic manager approval interface
+7. Email notifications for status changes
+
+## Phase 2: Core Functionality Enhancement
+1. Time off balance tracking and automatic updates
+2. Calendar visualization for request selection
+3. Dashboard views for employees and managers
+4. Request history and status tracking
+5. Comment system for request discussion
+6. Enhanced email notifications with templates
+
+## Phase 3: Advanced Features
+1. Team calendar view showing all approved time off
+2. Reporting and analytics functionality
+3. Department-level views and reports
+4. Request conflicts detection
+5. Enhanced mobile experience
+6. Export functionality for reports
+7. Bulk actions for managers (approve/deny multiple requests)
+
+## Phase 4: Refinement and Optimization
+1. Performance optimizations
+2. UI/UX improvements based on user feedback
+3. Advanced filtering and search capabilities
+4. Customizable workflows and approval chains
+5. Integration with calendar systems (Outlook, Google)
+
+# Logical Dependency Chain
+1. **Foundation First:**
+   - Project setup and configuration
+   - Authentication system
+   - Database schema and basic models
+   - User roles and permissions
+
+2. **Core Employee Functionality:**
+   - Time off request submission form
+   - Basic dashboard for employees
+   - Request history view
+
+3. **Manager Review System:**
+   - Manager dashboard
+   - Request approval/denial interface
+   - Simple notification system
+
+4. **Enhanced Experience:**
+   - Calendar visualization
+   - Time off balance tracking
+   - Email notifications
+
+5. **Advanced Features:**
+   - Reporting and analytics
+   - Team calendar views
+   - Export functionality
+
+# Risks and Mitigations
+1. **Microsoft Entra Integration Complexity**
+   - Risk: Integration with Microsoft Entra could be complex and time-consuming
+   - Mitigation: Begin with the Microsoft Authentication Library (MSAL) and start integration early in the development process
+
+2. **Data Integrity for Time Off Balances**
+   - Risk: Calculations for time off balances must be accurate and consistent
+   - Mitigation: Implement comprehensive unit tests for balance calculations and track all balance changes in an audit log
+
+3. **User Adoption**
+   - Risk: Users may resist changing from current process
+   - Mitigation: Focus on intuitive UI/UX and provide clear documentation
+
+4. **Performance with Large Organizations**
+   - Risk: System may slow down with many users and requests
+   - Mitigation: Implement pagination, caching, and database optimizations from the start
+
+# Appendix
+## Technical Details
+- Next.js 14+ with App Router
+- TypeScript for type safety
+- Prisma ORM for database access
+- Microsoft Authentication Library (MSAL) for Entra integration
+- React Hook Form for form handling
+- TanStack Query for data fetching
+- Full calendar visualization library
+- Tailwind CSS with shadcn/ui components for UI
+- Next-Auth for session management

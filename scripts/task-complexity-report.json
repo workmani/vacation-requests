@@ -1,0 +1,91 @@
+{
+  "meta": {
+    "generatedAt": "2025-04-13T19:47:13.553Z",
+    "tasksAnalyzed": 10,
+    "thresholdScore": 5,
+    "projectName": "Your Project Name",
+    "usedResearch": false
+  },
+  "complexityAnalysis": [
+    {
+      "taskId": 1,
+      "taskTitle": "Project Setup and Configuration",
+      "complexityScore": 5,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Break down the Next.js project setup into specific subtasks covering initialization, TypeScript configuration, Tailwind CSS integration, shadcn/ui setup, ESLint/Prettier configuration, and deployment pipeline setup with Vercel.",
+      "reasoning": "This task involves multiple configuration steps with different technologies. While each step is relatively straightforward for experienced developers, the integration of multiple tools (Next.js, TypeScript, Tailwind, shadcn/ui) requires careful coordination. The deployment pipeline adds another layer of complexity."
+    },
+    {
+      "taskId": 2,
+      "taskTitle": "Database Schema Design and Prisma ORM Setup",
+      "complexityScore": 7,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Divide the database schema implementation into subtasks covering Prisma installation, model definition for each entity (User, TimeOffRequest, TimeOffBalance, Department), relationship configuration, migration setup, and seed data creation.",
+      "reasoning": "Database schema design requires careful planning to ensure proper relationships between entities. The task involves multiple models with complex relationships, migration management, and environment-specific configurations. Prisma ORM setup adds technical complexity requiring specific knowledge."
+    },
+    {
+      "taskId": 3,
+      "taskTitle": "Microsoft Entra Authentication Integration",
+      "complexityScore": 8,
+      "recommendedSubtasks": 7,
+      "expansionPrompt": "Break down the Microsoft Entra authentication implementation into subtasks covering MSAL/Next-Auth installation, Azure AD application configuration, authentication flow implementation, role-based access control setup, protected route creation, API endpoint security, and session management.",
+      "reasoning": "Authentication with Microsoft Entra is highly complex, involving external service configuration, security considerations, and role-based access control. The integration requires deep understanding of authentication flows, token management, and security best practices. Multiple libraries need to be coordinated."
+    },
+    {
+      "taskId": 4,
+      "taskTitle": "User Management and Role Definition",
+      "complexityScore": 6,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Divide the user management functionality into subtasks covering API route creation, user profile CRUD operations, role assignment implementation, manager-employee relationship management, and department assignment functionality.",
+      "reasoning": "This task involves both backend and frontend work with complex relationships between users. Role-based functionality adds complexity to the implementation. The hierarchical nature of manager-employee relationships requires careful data modeling and UI considerations."
+    },
+    {
+      "taskId": 5,
+      "taskTitle": "Time Off Request Submission System",
+      "complexityScore": 7,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the time off request system into subtasks covering API route creation, form implementation with React Hook Form, calendar component integration, validation logic, time off type support, and database integration.",
+      "reasoning": "This task combines complex UI components (calendar visualization, forms) with validation logic and database operations. The different time off types and balance validation add business logic complexity. The form requires multiple interactive elements with state management."
+    },
+    {
+      "taskId": 6,
+      "taskTitle": "Manager Approval Interface",
+      "complexityScore": 6,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Divide the manager approval interface into subtasks covering dashboard UI implementation, approval workflow logic, API endpoint creation for status updates, filtering/sorting functionality, and notification integration.",
+      "reasoning": "This task requires building both UI components and backend logic for the approval workflow. The filtering and sorting functionality adds UI complexity. The task depends on previous implementations and must integrate with the notification system."
+    },
+    {
+      "taskId": 7,
+      "taskTitle": "Time Off Balance Tracking System",
+      "complexityScore": 7,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the balance tracking system into subtasks covering API route creation, balance calculation logic implementation, UI component development, automatic balance update functionality, year-end rollover policy implementation, and balance history tracking.",
+      "reasoning": "This task involves complex business logic for calculating and updating balances based on different time off types. The year-end rollover policies and history tracking add significant complexity. The system must integrate with the approval workflow and maintain data consistency."
+    },
+    {
+      "taskId": 8,
+      "taskTitle": "Email Notification System",
+      "complexityScore": 5,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Divide the email notification system into subtasks covering SMTP service integration, email template creation, notification triggering logic, user preference management, and notification logging/retry implementation.",
+      "reasoning": "Email notification requires integration with external services and creation of multiple templates. The user preferences and logging add moderate complexity. The retry logic for failed deliveries requires careful error handling and state management."
+    },
+    {
+      "taskId": 9,
+      "taskTitle": "Dashboard and Calendar Views",
+      "complexityScore": 7,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the dashboard and calendar implementation into subtasks covering employee dashboard UI, manager dashboard UI, calendar visualization library integration, team calendar implementation, filtering functionality, and responsive layout design.",
+      "reasoning": "This task involves complex UI components with different views for different user roles. The calendar visualization requires integration with a specialized library. The filtering options and responsive design add significant frontend complexity. The task must integrate data from multiple sources."
+    },
+    {
+      "taskId": 10,
+      "taskTitle": "Reporting and Analytics",
+      "complexityScore": 8,
+      "recommendedSubtasks": 7,
+      "expansionPrompt": "Divide the reporting functionality into subtasks covering API route creation, analytics calculation logic, report UI implementation, export functionality, data visualization components, filtering/date range selection, and HR-specific reporting tools.",
+      "reasoning": "Reporting and analytics involve complex data processing, visualization, and export functionality. The different report types (individual, team, department) require varied calculation logic. The visualizations and export capabilities add significant technical complexity. This task depends on data from multiple other components."
+    }
+  ]
+}
