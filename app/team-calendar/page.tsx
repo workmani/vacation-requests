@@ -6,7 +6,7 @@ export default function TeamCalendarPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold">Team Calendar</h1>
       <p className="text-muted-foreground">
-        View your team's time off schedule to help with planning and availability.
+        View your team&apos;s time off schedule to help with planning and availability.
       </p>
       
       <Card className="border-dashed">

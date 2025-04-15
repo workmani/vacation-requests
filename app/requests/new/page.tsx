@@ -2,18 +2,16 @@
 
 import { useState } from "react";
 import { CalendarDays } from "lucide-react";
-import { formatDate, calculateWorkDays } from "@/lib/utils";
+import { calculateWorkDays, cn } from "@/lib/utils";
 
 // Import ShadCN UI components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 export default function NewRequestPage() {
@@ -152,9 +150,4 @@ export default function NewRequestPage() {
       </form>
     </div>
   );
-}
-
-// Helper function to format dates for input elements
-function formatDateForInput(date: Date): string {
-  return date.toISOString().split('T')[0];
 } 

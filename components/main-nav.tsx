@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Calendar, Clock, FileText, Home, User, Users } from "lucide-react";
+import { Calendar, Clock, FileText, Home, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -56,8 +56,6 @@ export function MainNav() {
   // This would actually come from authentication context
   const isManager = true; // For now, show manager options
   
-  const allRoutes = isManager ? [...routes, ...managerRoutes] : routes;
-
   return (
     <nav className="flex flex-col space-y-1">
       {routes.map((route) => (

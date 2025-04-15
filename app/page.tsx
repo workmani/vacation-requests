@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarPlus, Calendar, Users, Clock } from "lucide-react";
+import { CalendarClock, CalendarPlus, Calendar, Clock } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";

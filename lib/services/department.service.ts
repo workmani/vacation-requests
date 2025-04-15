@@ -4,7 +4,7 @@
  * Service for handling department-related database operations
  */
 
-import { Department } from '../../lib/generated/prisma/index';
+import { Department, User } from '../../lib/generated/prisma/index';
 import prisma from './prisma.service';
 
 export class DepartmentService {
@@ -73,7 +73,7 @@ export class DepartmentService {
   /**
    * Get department with users
    */
-  static async findWithUsers(id: string): Promise<Department & { users: any[] }> {
+  static async findWithUsers(id: string): Promise<Department & { users: User[] }> {
     return prisma.department.findUniqueOrThrow({
       where: { id },
       include: { 
@@ -97,10 +97,12 @@ export class DepartmentService {
       },
     });
 
-    return departments.map(dept => ({
-      ...dept,
-      userCount: dept._count.users,
-      _count: undefined as any,
-    }));
+    return departments.map(dept => {
+      const { _count, ...rest } = dept;
+      return {
+        ...rest,
+        userCount: _count.users,
+      };
+    });
   }
 } 

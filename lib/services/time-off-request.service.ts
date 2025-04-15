@@ -6,6 +6,7 @@
 
 import { RequestStatus, TimeOffRequest, TimeOffType } from '../../lib/generated/prisma/index';
 import prisma from './prisma.service';
+import { Prisma } from '../../lib/generated/prisma/index';
 
 export class TimeOffRequestService {
   /**
@@ -228,12 +229,12 @@ export class TimeOffRequestService {
     type?: TimeOffType;
     managerId?: string;
   }): Promise<number> {
-    const where: any = { ...filters };
+    const { managerId, ...restFilters } = filters || {};
+    const where: Prisma.TimeOffRequestWhereInput = { ...restFilters };
     
     // Handle manager filter differently as it's a relation
-    if (filters?.managerId) {
-      where.user = { managerId: filters.managerId };
-      delete where.managerId;
+    if (managerId) {
+      where.user = { managerId: managerId };
     }
     
     return prisma.timeOffRequest.count({ where });
