@@ -1,6 +1,6 @@
-import NextAuth, { Account, Profile, Session, User } from "next-auth";
+import NextAuth, { Account, Profile, Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
-import AzureADProvider, { AzureADProfile } from "next-auth/providers/azure-ad";
+import AzureADProvider from "next-auth/providers/azure-ad";
 
 // Types are extended in types/next-auth.d.ts
 

@@ -28,7 +28,7 @@ export default async function AdminPage() {
     <div>
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
       <p>Welcome, Administrator!</p>
-      <p>This page is protected and only visible to users with the "Admin" role.</p>
+      <p>This page is protected and only visible to users with the &quot;Admin&quot; role.</p>
       {/* Add your admin-specific components and content here */}
     </div>
   );
