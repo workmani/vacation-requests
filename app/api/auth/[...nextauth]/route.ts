@@ -4,7 +4,7 @@ import AzureADProvider from "next-auth/providers/azure-ad";
 
 // Types are extended in types/next-auth.d.ts
 
-export const authOptions = {
+const authOptions = {
   // Configure one or more authentication providers
   providers: [
     AzureADProvider({
