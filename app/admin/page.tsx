@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 // Adjust the import path based on your project structure if needed
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; 
+import { authOptions } from "@/lib/authOptions";
 import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
