@@ -1,7 +1,29 @@
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"; 
+import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function TeamCalendarPage() {
+// Helper function to check roles for better readability
+const hasRequiredRole = (roles: string[] | undefined): boolean => {
+  if (!roles) return false;
+  return roles.includes("Manager") || roles.includes("Admin");
+};
+
+export default async function TeamCalendarPage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    const callbackUrl = encodeURIComponent("/team-calendar");
+    redirect(`/api/auth/signin?callbackUrl=${callbackUrl}`);
+  }
+
+  if (!hasRequiredRole(session.user?.roles)) {
+    console.warn(`User ${session.user?.email} attempted to access /team-calendar without Manager/Admin role.`);
+    redirect("/"); // Redirect non-managers/admins to home
+  }
+
+  // Render manager-specific content
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold">Team Calendar</h1>

@@ -15,9 +15,9 @@
  *   MIGRATION_TIMEOUT - Timeout in seconds (default: 30)
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+import { execSync } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 
 // Configuration
 const timeout = process.env.MIGRATION_TIMEOUT || 30;

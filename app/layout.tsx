@@ -3,6 +3,7 @@ import "./globals.css";
 import { Header } from "@/components/header";
 import { MainNav } from "@/components/main-nav";
 import { ThemeProvider } from "@/providers/theme-provider";
+import SessionProviderWrapper from "../src/providers/SessionProviderWrapper";
 
 export const metadata: Metadata = {
   title: "Vacation Request App",
@@ -23,15 +24,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <div className="flex flex-1">
-              <aside className="hidden w-64 border-r lg:block p-4">
-                <MainNav />
-              </aside>
-              <main className="flex-1 p-6">{children}</main>
+          <SessionProviderWrapper>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <div className="flex flex-1">
+                <aside className="hidden w-64 border-r lg:block p-4">
+                  <MainNav />
+                </aside>
+                <main className="flex-1 p-6">{children}</main>
+              </div>
             </div>
-          </div>
+          </SessionProviderWrapper>
         </ThemeProvider>
       </body>
     </html>

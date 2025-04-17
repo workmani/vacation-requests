@@ -6,8 +6,29 @@ import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { redirect } from "next/navigation";
 
-export default function TeamRequestsPage() {
+// Helper function to check roles (can be shared in a utils file later)
+const hasRequiredRole = (roles: string[] | undefined): boolean => {
+  if (!roles) return false;
+  return roles.includes("Manager") || roles.includes("Admin");
+};
+
+export default async function TeamRequestsPage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    const callbackUrl = encodeURIComponent("/team-requests");
+    redirect(`/api/auth/signin?callbackUrl=${callbackUrl}`);
+  }
+
+  if (!hasRequiredRole(session.user?.roles)) {
+    console.warn(`User ${session.user?.email} attempted to access /team-requests without Manager/Admin role.`);
+    redirect("/"); // Redirect non-managers/admins to home
+  }
+
   const [filter, setFilter] = useState("pending");
   
   // This would come from an API call
