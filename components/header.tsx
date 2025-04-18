@@ -24,7 +24,7 @@ export function Header() {
     <header className="border-b">
       <div className="flex h-16 items-center px-4 justify-between">
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold">Vacation Request App</span>
+          <span className="text-xl font-bold">Vacation Request App - POC</span>
         </Link>
         <div className="flex items-center gap-4">
           <ThemeToggle />

@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import SessionProviderWrapper from "../src/providers/SessionProviderWrapper";
 
 export const metadata: Metadata = {
-  title: "Vacation Request App",
+  title: "Vacation Request App (POC)",
   description: "Request and manage time off for your team",
 };
 
