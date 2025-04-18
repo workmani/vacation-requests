@@ -1,49 +1,51 @@
 import NextAuth from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 
+// Augmentation can sometimes cause issues, removing for now
+// declare module "next-auth" {
+//   interface Session {
+//     accessToken?: string;
+//     user?: {
+//       roles?: string[];
+//     } & DefaultSession["user"];
+//   }
+//   interface JWT {
+//     roles?: string[];
+//     accessToken?: string;
+//   }
+// }
+
 export const authOptions = {
-  // Configure one or more authentication providers
   providers: [
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
       tenantId: process.env.AZURE_AD_TENANT_ID!,
-      // Optional: Define specific scopes or profile information
-      // authorization: { params: { scope: "openid profile email User.Read" } },
     }),
-    // ...add more providers here if needed
   ],
-  // Optional: Add callbacks for customizing behavior (e.g., adding roles to token)
-  // callbacks: {
-  //   async jwt({ token, account, profile }) {
-  //     // Persist the access_token and user roles right after signin
-  //     if (account && profile) {
-  //       token.accessToken = account.access_token;
-  //       // Example: Assuming roles are in profile.roles (adjust based on your Entra config)
-  //       token.roles = profile.roles;
-  //     }
-  //     return token;
-  //   },
-  //   async session({ session, token }) {
-  //     // Send properties to the client, like an access_token and roles
-  //     session.accessToken = token.accessToken;
-  //     session.user.roles = token.roles; // Add roles to session.user
-  //     return session;
-  //   },
-  // },
-
-  // Add secret for production
+  callbacks: {
+    async jwt({ token, account, profile }: any) { // Use any to avoid type errors for now
+      if (account && profile) {
+        token.accessToken = account.access_token;
+        // Roles are in profile.roles based on logs
+        const roles = profile.roles;
+        if (roles && Array.isArray(roles)) {
+          token.roles = roles;
+        } else {
+          token.roles = [];
+        }
+      }
+      return token;
+    },
+    async session({ session, token }: any) { // Use any to avoid type errors for now
+      session.accessToken = token.accessToken;
+      if (session.user) {
+         session.user.roles = token.roles;
+      }
+      return session;
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
-
-  // Optional: Configure pages, session strategy, debug mode etc.
-  // pages: {
-  //   signIn: '/auth/signin',
-  //   // error: '/auth/error', // Error code passed in query string as ?error=
-  // },
-  // session: {
-  //   strategy: "jwt", // Use JSON Web Tokens for session
-  // },
-  // debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);
