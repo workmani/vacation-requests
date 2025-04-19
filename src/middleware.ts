@@ -1,6 +1,5 @@
 import { auth } from "./auth"; // Import the v5 auth helper
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
 // Define public routes (adjust as needed)
 const publicRoutes = ["/login", "/register", "/about"]; // Add any routes that don't require auth

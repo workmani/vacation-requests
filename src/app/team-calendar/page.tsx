@@ -17,7 +17,7 @@ export default async function TeamCalendarPage() {
     redirect(`/api/auth/signin?callbackUrl=${callbackUrl}`);
   }
 
-  if (!hasRequiredRole((session.user as any)?.roles)) {
+  if (!hasRequiredRole(session.user?.roles)) {
     console.warn(`User ${session.user?.email} attempted to access /team-calendar without Manager/Admin role.`);
     redirect("/"); // Redirect non-managers/admins to home
   }

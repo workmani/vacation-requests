@@ -1,4 +1,4 @@
-import { PrismaClient, Role, TimeOffType, RequestStatus } from '../lib/generated/prisma/index.js';
+import { PrismaClient, Role, TimeOffType, RequestStatus } from '../src/lib/generated/prisma/index.js';
 import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();

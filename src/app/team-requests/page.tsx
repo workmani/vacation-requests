@@ -68,7 +68,7 @@ export default async function TeamRequestsPage() {
   }
 
   // Check roles from the session user
-  if (!hasRequiredRole((session.user as any)?.roles)) { 
+  if (!hasRequiredRole(session.user?.roles)) {
     console.warn(`User ${session.user?.email} attempted to access /team-requests without Manager/Admin role.`);
     redirect("/"); 
   }

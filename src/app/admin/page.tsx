@@ -14,7 +14,7 @@ export default async function AdminPage() {
 
   // 3. Check if the user has the required role (case-sensitive)
   // Access roles via session.user (ensure type is extended in next-auth.d.ts)
-  if (!(session.user as any)?.roles?.includes("Admin")) { 
+  if (!session.user?.roles?.includes("Admin")) {
     // Redirect to a generic "Unauthorized" page or the home page
     console.warn(`User ${session.user?.email} attempted to access /admin without Admin role.`);
     redirect("/"); 

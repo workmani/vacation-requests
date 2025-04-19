@@ -1,4 +1,4 @@
-import type { NextAuthConfig, Account, Profile, Session, User } from 'next-auth';
+import type { NextAuthConfig, Account, Profile, Session } from 'next-auth';
 // For beta.25, the provider import should be directly from next-auth
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id"; 
 import type { JWT } from "next-auth/jwt";
@@ -37,11 +37,11 @@ export const authConfig = {
       // Add properties from token to session
       if (session.user) {
         // Extend Session['user'] type in next-auth.d.ts to include roles
-        (session.user as any).roles = token.roles; 
+        session.user.roles = token.roles;
       }
       // Extend Session type in next-auth.d.ts to include accessToken if needed
       if (session) {
-        (session as any).accessToken = token.accessToken;
+        session.accessToken = token.accessToken as string;
       }
       return session;
     },
