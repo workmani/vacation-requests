@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/authOptions";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,14 +10,14 @@ const hasRequiredRole = (roles: string[] | undefined): boolean => {
 };
 
 export default async function TeamCalendarPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
-  if (!session) {
+  if (!session?.user) {
     const callbackUrl = encodeURIComponent("/team-calendar");
     redirect(`/api/auth/signin?callbackUrl=${callbackUrl}`);
   }
 
-  if (!hasRequiredRole(session.user?.roles)) {
+  if (!hasRequiredRole((session.user as any)?.roles)) {
     console.warn(`User ${session.user?.email} attempted to access /team-calendar without Manager/Admin role.`);
     redirect("/"); // Redirect non-managers/admins to home
   }

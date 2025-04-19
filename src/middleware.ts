@@ -1,32 +1,47 @@
-import { withAuth } from "next-auth/middleware"
-import type { NextRequest } from "next/server"
+import { auth } from "./auth"; // Import the v5 auth helper
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export default withAuth(
-  // `withAuth` augments your Request with the user's token.
-  function middleware(req: NextRequest) {
-    console.log(">>> Middleware function executed for:", req.nextUrl.pathname);
-    // You could add redirection logic here based on req.nextauth.token
-    // console.log("Token:", req.nextauth.token)
-  },
-  {
-    callbacks: {
-      authorized: ({ req, token }) => {
-        console.log(">>> Authorized callback triggered for:", req.nextUrl.pathname);
-        // console.log("Token in authorized callback:", token);
-        // Return true if the user has a token (logged in), otherwise false (triggers redirect)
-        const isAuthorized = !!token;
-        console.log(">>> Authorized result:", isAuthorized);
-        return isAuthorized;
-      },
-    },
-    // Ensure it knows where to redirect if authorized returns false
-    // pages: {
-    //   signIn: '/api/auth/signin', // This is the default
-    // }
+// Define public routes (adjust as needed)
+const publicRoutes = ["/login", "/register", "/about"]; // Add any routes that don't require auth
+const rootRoute = "/"; // Or your main landing page
+const defaultLoginRedirect = "/dashboard"; // Where to redirect after login
+
+export default auth((req) => {
+  const { nextUrl } = req;
+  const session = req.auth; // Access session info directly from req.auth
+  const isLoggedIn = !!session;
+
+  // Root route ("/") should NOT be considered public unless explicitly listed
+  const isPublic = publicRoutes.includes(nextUrl.pathname);
+
+  console.log(">>> Middleware v5: Path:", nextUrl.pathname, "| IsLoggedIn:", isLoggedIn, "| IsPublic:", isPublic);
+
+  // Redirect logged-in users from public routes (like login) to dashboard
+  if (isLoggedIn && isPublic && nextUrl.pathname !== rootRoute) {
+    console.log(">>> Redirecting logged-in user from public route to dashboard");
+    return NextResponse.redirect(new URL(defaultLoginRedirect, nextUrl));
   }
-)
 
-// Restore the original matcher
+  // Redirect unauthenticated users from protected routes to login
+  if (!isLoggedIn && !isPublic) {
+    console.log(">>> Redirecting unauthenticated user to login");
+    // You might want to preserve the intended URL via callbackUrl
+    let callbackUrl = nextUrl.pathname;
+    if (nextUrl.search) {
+      callbackUrl += nextUrl.search;
+    }
+    const encodedCallbackUrl = encodeURIComponent(callbackUrl);
+    // Adjust the sign-in URL if you have a custom one
+    return NextResponse.redirect(new URL(`/api/auth/signin?callbackUrl=${encodedCallbackUrl}`, nextUrl));
+  }
+
+  // Allow the request to proceed
+  console.log(">>> Allowing request to proceed.");
+  return NextResponse.next();
+});
+
+// Matcher remains the same, applying middleware to most routes
 export const config = {
   matcher: [
     /*

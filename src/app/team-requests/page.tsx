@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/authOptions";
+import { auth } from "@/auth"; // Use v5 auth helper
 import { redirect } from "next/navigation";
 import TeamRequestsClient from "@/components/TeamRequestsClient";
 
@@ -61,14 +60,15 @@ const hasRequiredRole = (roles: string[] | undefined): boolean => {
 // This is now an async Server Component
 export default async function TeamRequestsPage() {
   // --- Server-Side Logic --- 
-  const session = await getServerSession(authOptions);
+  const session = await auth(); // Get session using v5 helper
 
-  if (!session) {
+  if (!session?.user) { // Check for session and user
     const callbackUrl = encodeURIComponent("/team-requests");
     redirect(`/api/auth/signin?callbackUrl=${callbackUrl}`);
   }
 
-  if (!hasRequiredRole(session.user?.roles)) {
+  // Check roles from the session user
+  if (!hasRequiredRole((session.user as any)?.roles)) { 
     console.warn(`User ${session.user?.email} attempted to access /team-requests without Manager/Admin role.`);
     redirect("/"); 
   }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useSession, signIn, signOut } from "next-auth/react";
-// Assuming you have a Button component from shadcn/ui
+import { useSession } from "next-auth/react";
+import { signIn, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 
 export function AuthStatus() {
@@ -17,7 +17,11 @@ export function AuthStatus() {
         <span className="text-sm text-gray-700 dark:text-gray-300">
           Signed in as {session.user?.email}
         </span>
-        <Button variant="outline" size="sm" onClick={() => signOut()}>Sign out</Button>
+        <form action={async () => {
+          await signOut();
+        }}>
+          <Button type="submit" variant="outline" size="sm">Sign out</Button>
+        </form>
       </div>
     );
   }
@@ -25,9 +29,11 @@ export function AuthStatus() {
   return (
     <div className="flex items-center gap-4">
       <span className="text-sm text-gray-500">Not signed in</span>
-      {/* Note: We specify 'azure-ad' to hint which provider to use */}
-      {/* If you only have one provider, signIn() without args also works */}
-      <Button size="sm" onClick={() => signIn("azure-ad")}>Sign in</Button>
+      <form action={async () => {
+        await signIn("microsoft-entra-id");
+      }}>
+        <Button type="submit" size="sm">Sign in</Button>
+      </form>
     </div>
   );
 } 
