@@ -7,6 +7,9 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage",
     "list": "node scripts/dev.js list",
     "generate": "node scripts/dev.js generate",
     "parse-prd": "node scripts/dev.js parse-prd",
@@ -73,15 +76,21 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.4.1",
+    "@vitest/ui": "^3.1.1",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
+    "jsdom": "^26.1.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.1.1"
   },
   "type": "module"
 }
