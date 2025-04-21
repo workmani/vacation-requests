@@ -1,10 +1,28 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { PrismaClient, Role, TimeOffRequest, TimeOffType, RequestStatus } from '../../lib/generated/prisma/index'
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest'
+import { PrismaClient, TimeOffRequest as PrismaTimeOffRequest, TimeOffType, RequestStatus, User as PrismaUser } from '../../lib/generated/prisma/index'
 import { TimeOffRequestService } from './time-off-request.service'
+
+// Define types for the mock Prisma client structure
+type MockPrismaTimeOffRequest = {
+  findMany: Mock
+  findUnique: Mock
+  create: Mock
+  update: Mock
+  delete: Mock
+  count: Mock
+}
+type MockPrismaUser = {
+  findUnique: Mock
+}
+type MockPrismaClient = {
+  timeOffRequest: MockPrismaTimeOffRequest
+  user: MockPrismaUser
+  $transaction: Mock
+}
 
 // Mock the Prisma client
 vi.mock('./prisma.service', () => {
-  const mockPrisma = {
+  const mockPrisma: MockPrismaClient = {
     timeOffRequest: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -13,11 +31,7 @@ vi.mock('./prisma.service', () => {
       delete: vi.fn(),
       count: vi.fn(),
     },
-    comment: { // Needed for includes/creates
-      findMany: vi.fn(),
-      create: vi.fn(),
-    },
-    user: { // Needed for includes
+    user: {
       findUnique: vi.fn(),
     },
     $transaction: vi.fn(),
@@ -29,12 +43,32 @@ vi.mock('./prisma.service', () => {
   }
 })
 
-// Dynamically import the mocked module
-const PrismaServiceMock = await import('./prisma.service')
-// Access the mock functions
-const mockRequestDb = (PrismaServiceMock as any).__mockPrisma.timeOffRequest
-const mockCommentDb = (PrismaServiceMock as any).__mockPrisma.comment
-const mockUserDb = (PrismaServiceMock as any).__mockPrisma.user
+// Type assertion for the dynamically imported module
+type PrismaServiceMockType = typeof import('./prisma.service') & {
+  __mockPrisma: MockPrismaClient
+}
+
+// Dynamically import the mocked module and assert its type
+const PrismaServiceMock = await import('./prisma.service') as PrismaServiceMockType
+
+// Access the mock functions with the asserted type
+const mockRequestDb = PrismaServiceMock.__mockPrisma.timeOffRequest
+
+// Define types for included relations
+type UserPartial = Partial<PrismaUser>
+type RequestWithIncludes = PrismaTimeOffRequest & { user?: UserPartial, reviewer?: UserPartial | null }
+
+// Define the expected update payload type based on the error message
+type TimeOffRequestUpdatePayload = Partial<{
+  type: TimeOffType;
+  status: RequestStatus;
+  startDate: Date;
+  endDate: Date;
+  duration: number;
+  notes: string; // Explicitly string | undefined, resolving the null incompatibility
+  reviewerId: string;
+  reviewedAt: Date;
+}>;
 
 describe('TimeOffRequestService', () => {
 
@@ -48,17 +82,16 @@ describe('TimeOffRequestService', () => {
     it('should return a request with includes when found by ID', async () => {
       // Arrange
       const requestId = 'req-abc'
-      const mockRequest: TimeOffRequest = {
+      const mockRequest: PrismaTimeOffRequest = {
         id: requestId, userId: 'user1', type: TimeOffType.VACATION,
         status: RequestStatus.PENDING, startDate: new Date('2024-01-10'), endDate: new Date('2024-01-12'),
         duration: 3, notes: 'Test', reviewerId: null, reviewedAt: null,
         createdAt: new Date(), updatedAt: new Date()
       }
-      const mockIncludedData = {
+      const mockIncludedData: RequestWithIncludes = {
         ...mockRequest,
-        user: { id: 'user1', name: 'Test User', email: 'test@test.com', role: Role.EMPLOYEE, password: '...', departmentId: 'd1', managerId: 'm1', createdAt: new Date(), updatedAt: new Date() },
+        user: { id: 'user1', name: 'Test User' },
         reviewer: null,
-        comments: [],
       }
       mockRequestDb.findUnique.mockResolvedValue(mockIncludedData)
 
@@ -108,11 +141,11 @@ describe('TimeOffRequestService', () => {
     it('should return a paginated list of requests with includes', async () => {
       // Arrange
       const page = 1, limit = 10
-      const mockRequests = [
+      const mockRequests: Partial<RequestWithIncludes>[] = [
         { id: 'r1', userId: 'u1', user: { name: 'User 1' }, reviewer: null },
         { id: 'r2', userId: 'u2', user: { name: 'User 2' }, reviewer: { name: 'Manager 1' } },
       ]
-      mockRequestDb.findMany.mockResolvedValue(mockRequests as any)
+      mockRequestDb.findMany.mockResolvedValue(mockRequests)
 
       // Act
       const result = await TimeOffRequestService.findAll(page, limit)
@@ -159,11 +192,11 @@ describe('TimeOffRequestService', () => {
         endDate: new Date('2024-02-01'),
         duration: 1,
         notes: 'Flu',
-        status: RequestStatus.PENDING // Explicitly setting default
+        status: RequestStatus.PENDING
       }
-      const expectedRequest = { ...inputData, id: 'new-req-id', createdAt: new Date(), updatedAt: new Date() }
-      const expectedResultWithUser = { ...expectedRequest, user: { name: 'Creator'} }
-      mockRequestDb.create.mockResolvedValue(expectedResultWithUser as any)
+      const expectedRequest: PrismaTimeOffRequest = { ...inputData, id: 'new-req-id', createdAt: new Date(), updatedAt: new Date(), reviewerId: null, reviewedAt: null }
+      const expectedResultWithUser: RequestWithIncludes = { ...expectedRequest, user: { name: 'Creator'}, reviewer: null }
+      mockRequestDb.create.mockResolvedValue(expectedResultWithUser)
 
       // Act
       const result = await TimeOffRequestService.create(inputData)
@@ -201,9 +234,11 @@ describe('TimeOffRequestService', () => {
     it('should update a request and return it with includes', async () => {
       // Arrange
       const requestId = 'update-req-id'
-      const updateData = { notes: 'Updated note' }
-      const expectedResult = { id: requestId, notes: 'Updated note', user: {}, reviewer: {}, comments: [] }
-      mockRequestDb.update.mockResolvedValue(expectedResult as any)
+      // Ensure updateData only contains fields being updated (notes: string)
+      const updateData: TimeOffRequestUpdatePayload = { notes: 'Updated note' }
+      // Remove 'comments' from mock result as it's not in RequestWithIncludes type
+      const expectedResult: Partial<RequestWithIncludes> = { id: requestId, notes: 'Updated note', user: {}, reviewer: {} }
+      mockRequestDb.update.mockResolvedValue(expectedResult)
 
       // Act
       const result = await TimeOffRequestService.update(requestId, updateData)
@@ -212,8 +247,8 @@ describe('TimeOffRequestService', () => {
       expect(mockRequestDb.update).toHaveBeenCalledTimes(1)
       expect(mockRequestDb.update).toHaveBeenCalledWith({
         where: { id: requestId },
-        data: updateData, // reviewedAt not set here
-        include: { user: true, reviewer: true, comments: true }
+        data: updateData,
+        include: { user: true, reviewer: true, comments: true } // Keep include in call
       })
       expect(result).toEqual(expectedResult)
     })
@@ -221,9 +256,10 @@ describe('TimeOffRequestService', () => {
     it('should set reviewedAt when status changes to APPROVED', async () => {
       // Arrange
       const requestId = 'approve-req-id'
-      const updateData = { status: RequestStatus.APPROVED, reviewerId: 'manager1' }
-      const expectedResult = { id: requestId, status: RequestStatus.APPROVED, reviewedAt: new Date('2024-01-01T12:00:00.000Z') }
-      mockRequestDb.update.mockResolvedValue(expectedResult as any)
+      // notes is optional, so omit it if not needed for Partial
+      const updateData: TimeOffRequestUpdatePayload = { status: RequestStatus.APPROVED, reviewerId: 'manager1' }
+      const expectedResult: Partial<RequestWithIncludes> = { id: requestId, status: RequestStatus.APPROVED, reviewedAt: new Date('2024-01-01T12:00:00.000Z') }
+      mockRequestDb.update.mockResolvedValue(expectedResult)
       const expectedDate = new Date('2024-01-01T12:00:00.000Z')
 
       // Act
@@ -231,18 +267,19 @@ describe('TimeOffRequestService', () => {
 
       // Assert
       expect(mockRequestDb.update).toHaveBeenCalledTimes(1)
-      // Check that data passed includes the reviewedAt set by the service
       expect(mockRequestDb.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: { ...updateData, reviewedAt: expectedDate },
+        // Ensure data matches the expected type (notes not present)
+        data: { status: RequestStatus.APPROVED, reviewerId: 'manager1', reviewedAt: expectedDate },
       }))
     })
 
     it('should set reviewedAt when status changes to REJECTED', async () => {
       // Arrange
       const requestId = 'reject-req-id'
-      const updateData = { status: RequestStatus.REJECTED, reviewerId: 'manager1' }
-      const expectedResult = { id: requestId, status: RequestStatus.REJECTED, reviewedAt: new Date('2024-01-01T12:00:00.000Z') }
-      mockRequestDb.update.mockResolvedValue(expectedResult as any)
+      // notes is optional, so omit it if not needed for Partial
+      const updateData: TimeOffRequestUpdatePayload = { status: RequestStatus.REJECTED, reviewerId: 'manager1' }
+      const expectedResult: Partial<RequestWithIncludes> = { id: requestId, status: RequestStatus.REJECTED, reviewedAt: new Date('2024-01-01T12:00:00.000Z') }
+      mockRequestDb.update.mockResolvedValue(expectedResult)
       const expectedDate = new Date('2024-01-01T12:00:00.000Z')
 
       // Act
@@ -251,22 +288,24 @@ describe('TimeOffRequestService', () => {
       // Assert
       expect(mockRequestDb.update).toHaveBeenCalledTimes(1)
       expect(mockRequestDb.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: { ...updateData, reviewedAt: expectedDate },
+        // Ensure data matches the expected type (notes not present)
+        data: { status: RequestStatus.REJECTED, reviewerId: 'manager1', reviewedAt: expectedDate },
       }))
     })
 
     it('should NOT set reviewedAt when status changes to PENDING', async () => {
       // Arrange
       const requestId = 'pending-req-id'
-      const updateData = { status: RequestStatus.PENDING } // e.g., reverting an approval
-      mockRequestDb.update.mockResolvedValue({ id: requestId } as any)
+      // notes is optional, so omit it if not needed for Partial
+      const updateData: TimeOffRequestUpdatePayload = { status: RequestStatus.PENDING } // e.g., reverting an approval
+      mockRequestDb.update.mockResolvedValue({ id: requestId } as Partial<RequestWithIncludes>)
 
       // Act
       await TimeOffRequestService.update(requestId, updateData)
 
       // Assert
       expect(mockRequestDb.update).toHaveBeenCalledTimes(1)
-      // Check that data passed does NOT include reviewedAt
+      // Ensure data matches the expected type (notes not present)
       expect(mockRequestDb.update).toHaveBeenCalledWith(expect.objectContaining({
         data: { status: RequestStatus.PENDING },
       }))
@@ -276,7 +315,7 @@ describe('TimeOffRequestService', () => {
     it('should handle errors during update', async () => {
       // Arrange
       const requestId = 'update-fail-id'
-      const updateData = { notes: 'Fail' }
+      const updateData: TimeOffRequestUpdatePayload = { notes: 'Fail' }
       const testError = new Error('DB update error')
       mockRequestDb.update.mockRejectedValue(testError)
       // Act & Assert
@@ -288,8 +327,9 @@ describe('TimeOffRequestService', () => {
     it('should delete a request', async () => {
       // Arrange
       const requestId = 'delete-req-id'
-      const deletedRequest = { id: requestId, userId: 'u1' }
-      mockRequestDb.delete.mockResolvedValue(deletedRequest as any)
+      // Use Partial Prisma type for deleted item
+      const deletedRequest: Partial<PrismaTimeOffRequest> = { id: requestId, userId: 'u1' }
+      mockRequestDb.delete.mockResolvedValue(deletedRequest)
       // Act
       const result = await TimeOffRequestService.delete(requestId)
       // Assert
@@ -313,8 +353,9 @@ describe('TimeOffRequestService', () => {
       // Arrange
       const userId = 'user-with-reqs'
       const page = 1, limit = 5
-      const mockRequests = [{ id: 'r3', userId, reviewer: { name: 'Manager' }, comments: [] }]
-      mockRequestDb.findMany.mockResolvedValue(mockRequests as any)
+      // Remove 'comments' from mock data
+      const mockRequests: Partial<RequestWithIncludes>[] = [{ id: 'r3', userId, reviewer: { name: 'Manager' } }]
+      mockRequestDb.findMany.mockResolvedValue(mockRequests)
 
       // Act
       const result = await TimeOffRequestService.findByUser(userId, page, limit)
@@ -326,7 +367,7 @@ describe('TimeOffRequestService', () => {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: { reviewer: true, comments: true }
+        include: { reviewer: true, comments: true } // Keep include in call
       })
       expect(result).toEqual(mockRequests)
     })
@@ -345,8 +386,9 @@ describe('TimeOffRequestService', () => {
       // Arrange
       const status = RequestStatus.APPROVED
       const page = 1, limit = 10
-      const mockRequests = [{ id: 'r4', status, user: { name: 'U' }, reviewer: { name: 'M'} }]
-      mockRequestDb.findMany.mockResolvedValue(mockRequests as any)
+      // Use Partial RequestWithIncludes type
+      const mockRequests: Partial<RequestWithIncludes>[] = [{ id: 'r4', status, user: { name: 'U' }, reviewer: { name: 'M'} }]
+      mockRequestDb.findMany.mockResolvedValue(mockRequests)
 
       // Act
       const result = await TimeOffRequestService.findByStatus(status, page, limit)
@@ -377,8 +419,9 @@ describe('TimeOffRequestService', () => {
       // Arrange
       const managerId = 'manager-abc'
       const page = 1, limit = 10
-      const mockRequests = [{ id: 'r5', user: { managerId } }]
-      mockRequestDb.findMany.mockResolvedValue(mockRequests as any)
+      // Use Partial<RequestWithIncludes>
+      const mockRequests: Partial<RequestWithIncludes>[] = [{ id: 'r5', user: { managerId } }]
+      mockRequestDb.findMany.mockResolvedValue(mockRequests)
 
       // Act
       const result = await TimeOffRequestService.findByManager(managerId, page, limit)
@@ -410,8 +453,9 @@ describe('TimeOffRequestService', () => {
       const startDate = new Date('2024-03-01')
       const endDate = new Date('2024-03-10')
       const page = 1, limit = 10
-      const mockRequests = [{ id: 'r6' }]
-      mockRequestDb.findMany.mockResolvedValue(mockRequests as any)
+      // Use Partial<RequestWithIncludes>
+      const mockRequests: Partial<RequestWithIncludes>[] = [{ id: 'r6' }]
+      mockRequestDb.findMany.mockResolvedValue(mockRequests)
 
       // Act
       const result = await TimeOffRequestService.findByDateRange(startDate, endDate, page, limit)
@@ -448,9 +492,9 @@ describe('TimeOffRequestService', () => {
       // Arrange
       const requestId = 'req-with-comment'
       const content = 'This is a test comment'
-      const expectedResult = { id: requestId, comments: [{ content }] }
-      // Mock the update method which is used by addComment
-      mockRequestDb.update.mockResolvedValue(expectedResult as any)
+      // Use Partial<RequestWithIncludes> (comment field was removed from this type)
+      const expectedResult: Partial<RequestWithIncludes> = { id: requestId }
+      mockRequestDb.update.mockResolvedValue(expectedResult)
 
       // Act
       const result = await TimeOffRequestService.addComment(requestId, content)

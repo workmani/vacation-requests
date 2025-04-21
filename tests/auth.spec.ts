@@ -58,9 +58,10 @@ test.describe('RBAC - Employee Role', () => {
 
     // Test /team-requests (Assuming similar redirect logic to home)
     await page.goto('/team-requests');
-    await expect(page).toHaveURL('/'); 
+    await expect(page).toHaveURL('/');
     // Verify it's not the team requests page by checking the heading is absent
-    await expect(page.getByRole('heading', { name: /Team Requests/i })).not.toBeVisible();
+    // ** Verify this locator is correct for the team requests page **
+    await expect(page.getByRole('heading', { name: /Team Time Off Requests/i })).not.toBeVisible(); 
   });
 });
 
@@ -95,7 +96,8 @@ test.describe('RBAC - Manager Role', () => {
     await page.goto('/team-requests');
     await expect(page).not.toHaveURL(/.*\/api\/auth\/signin/);
     // ** Verify this locator is correct for the team requests page **
-    await expect(page.getByRole('heading', { name: /Team Time Off Requests/i })).toBeVisible(); 
+    // Assuming the heading is 'Team Requests' - adjust if needed
+    await expect(page.getByRole('heading', { name: /Team Time Off Requests/i })).toBeVisible();
   });
 
   // Logout test moved here
@@ -104,7 +106,7 @@ test.describe('RBAC - Manager Role', () => {
     await page.goto('/'); 
 
     // Find and click the user menu trigger button by looking for the button containing the user's name
-    // ** Verify "TestManager" matches the display name in the UI for the manager user **
+    // ** Verify "Test Manager" matches the display name in the UI for the manager user **
     const userMenuTrigger = page.locator('button:has-text("Test Manager")'); 
     await expect(userMenuTrigger).toBeVisible();
     await userMenuTrigger.click();
@@ -128,6 +130,54 @@ test.describe('RBAC - Manager Role', () => {
     // Optional: Try accessing a protected route again and expect redirect
     await page.goto('/'); // Go back to root or a known protected route
     await expect(page).toHaveURL(/.*\/api\/auth\/signin/);
+  });
+});
+
+// --- API Authentication & Authorization Tests ---
+
+// Define actual API routes used in the application
+// Common route example: fetching user's own requests or profile
+const PROTECTED_API_COMMON = '/api/requests'; 
+// Manager-only route example: fetching team requests or performing manager actions
+const PROTECTED_API_MANAGER_ONLY = '/api/team-requests'; // Adjust if your manager route is different
+
+test.describe('API Security - Unauthenticated', () => {
+  test('should return 401/403 for protected API routes', async ({ request }) => {
+    // Test common protected route (e.g., GET own requests)
+    const commonResponse = await request.get(PROTECTED_API_COMMON);
+    expect(commonResponse.status()).toBeGreaterThanOrEqual(400); // Expect 401 or 403
+
+    // Test manager-only route (e.g., GET team requests)
+    const managerResponse = await request.get(PROTECTED_API_MANAGER_ONLY);
+    expect(managerResponse.status()).toBeGreaterThanOrEqual(400); // Expect 401 or 403
+  });
+});
+
+test.describe('API Security - Employee Role', () => {
+  test.use({ storageState: employeeAuthFile });
+
+  test('should access common protected API routes', async ({ request }) => {
+    const response = await request.get(PROTECTED_API_COMMON); // e.g., GET /api/requests (should return own requests)
+    expect(response.ok()).toBeTruthy(); // Expect 2xx status
+  });
+
+  test('should NOT access manager-only API routes (receive 403)', async ({ request }) => {
+    const response = await request.get(PROTECTED_API_MANAGER_ONLY); // e.g., GET /api/team-requests
+    expect(response.status()).toBe(403); // Expect Forbidden specifically
+  });
+});
+
+test.describe('API Security - Manager Role', () => {
+  test.use({ storageState: managerAuthFile });
+
+  test('should access common protected API routes', async ({ request }) => {
+    const commonResponse = await request.get(PROTECTED_API_COMMON); // e.g., GET /api/requests (should return own requests)
+    expect(commonResponse.ok()).toBeTruthy(); // Expect 2xx status
+  });
+
+  test('should access manager-only API routes', async ({ request }) => {
+    const managerResponse = await request.get(PROTECTED_API_MANAGER_ONLY); // e.g., GET /api/team-requests
+    expect(managerResponse.ok()).toBeTruthy(); // Expect 2xx status
   });
 });
 

@@ -1,10 +1,26 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { PrismaClient, Role } from '../../lib/generated/prisma/index' // Import type for casting & Role enum
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest'
+import { PrismaClient, Role, User as PrismaUser } from '../../lib/generated/prisma/index' // Import User type
 import { UserService } from './user.service'
 
-// Mock the Prisma client for UserService
+// Define types for the mock Prisma client structure
+type MockPrismaUser = {
+  findMany: Mock
+  findUnique: Mock
+  create: Mock
+  update: Mock
+  delete: Mock
+  count: Mock
+  // Add other user model methods if needed
+}
+type MockPrismaClient = {
+  user: MockPrismaUser
+  // Mock other models if UserService interacts with them directly
+  $transaction: Mock
+}
+
+// Mock the Prisma client
 vi.mock('./prisma.service', () => {
-  const mockPrisma = {
+  const mockPrisma: MockPrismaClient = {
     user: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -12,9 +28,7 @@ vi.mock('./prisma.service', () => {
       update: vi.fn(),
       delete: vi.fn(),
       count: vi.fn(),
-      // Add other user model methods if needed
     },
-    // Mock other models if UserService interacts with them directly (unlikely)
     $transaction: vi.fn(),
   }
   return {
@@ -24,15 +38,20 @@ vi.mock('./prisma.service', () => {
   }
 })
 
-// Dynamically import the mocked module
-const PrismaServiceMock = await import('./prisma.service')
-// Access the mock functions via the exported structure
-const mockUserDb = (PrismaServiceMock as any).__mockPrisma.user
+// Type assertion for the dynamically imported module
+type PrismaServiceMockType = typeof import('./prisma.service') & {
+  __mockPrisma: MockPrismaClient
+}
+
+// Dynamically import the mocked module and assert its type
+const PrismaServiceMock = await import('./prisma.service') as PrismaServiceMockType
+
+// Access the mock functions with the asserted type
+const mockUserDb = PrismaServiceMock.__mockPrisma.user
 
 describe('UserService', () => {
 
   beforeEach(() => {
-    // Reset mocks before each test
     vi.resetAllMocks()
   })
 
@@ -42,7 +61,8 @@ describe('UserService', () => {
     it('should return a user when found by ID', async () => {
       // Arrange
       const userId = 'user-test-id'
-      const mockUser = {
+      // Use PrismaUser type
+      const mockUser: PrismaUser = {
         id: userId, name: 'Test User', email: 'test@example.com', role: Role.EMPLOYEE,
         password: 'hashedpassword', departmentId: null, managerId: null,
         createdAt: new Date(), updatedAt: new Date()
@@ -88,7 +108,8 @@ describe('UserService', () => {
     it('should return a user when found by email', async () => {
       // Arrange
       const userEmail = 'test@example.com'
-      const mockUser = { id: 'user-email-id', name: 'Email User', email: userEmail, role: Role.EMPLOYEE, password: '...', createdAt: new Date(), updatedAt: new Date() }
+      // Use PrismaUser type
+      const mockUser: PrismaUser = { id: 'user-email-id', name: 'Email User', email: userEmail, role: Role.EMPLOYEE, password: '...', createdAt: new Date(), updatedAt: new Date(), departmentId: null, managerId: null }
       mockUserDb.findUnique.mockResolvedValue(mockUser)
       // Act
       const result = await UserService.findByEmail(userEmail)
@@ -123,8 +144,9 @@ describe('UserService', () => {
   describe('findAll', () => {
     it('should return a paginated list of users ordered by name', async () => {
       // Arrange
-      const mockUsers = [{ id: 'u1', name: 'Alice' }, { id: 'u2', name: 'Bob' }]
-      mockUserDb.findMany.mockResolvedValue(mockUsers as any)
+      // Use Partial<PrismaUser> for mock array
+      const mockUsers: Partial<PrismaUser>[] = [{ id: 'u1', name: 'Alice' }, { id: 'u2', name: 'Bob' }]
+      mockUserDb.findMany.mockResolvedValue(mockUsers)
       const page = 2
       const limit = 5
       // Act
@@ -141,8 +163,9 @@ describe('UserService', () => {
 
     it('should use default pagination when not provided', async () => {
       // Arrange
-      const mockUsers = [{ id: 'u3', name: 'Charlie' }]
-      mockUserDb.findMany.mockResolvedValue(mockUsers as any)
+      // Use Partial<PrismaUser> for mock array
+      const mockUsers: Partial<PrismaUser>[] = [{ id: 'u3', name: 'Charlie' }]
+      mockUserDb.findMany.mockResolvedValue(mockUsers)
       // Act
       await UserService.findAll()
       // Assert
@@ -167,8 +190,9 @@ describe('UserService', () => {
     it('should create a user and return it', async () => {
       // Arrange
       const inputData = { name: 'New User', email: 'new@example.com', password: 'plainpassword' }
-      const expectedUser = { ...inputData, id: 'new-id', role: Role.EMPLOYEE, createdAt: new Date(), updatedAt: new Date() }
-      mockUserDb.create.mockResolvedValue(expectedUser as any)
+      // Use PrismaUser type
+      const expectedUser: PrismaUser = { ...inputData, id: 'new-id', role: Role.EMPLOYEE, createdAt: new Date(), updatedAt: new Date(), departmentId: null, managerId: null }
+      mockUserDb.create.mockResolvedValue(expectedUser)
       // Act
       const result = await UserService.create(inputData)
       // Assert
@@ -192,8 +216,9 @@ describe('UserService', () => {
       // Arrange
       const userId = 'update-user-id'
       const updateData = { name: 'Updated Name', role: Role.MANAGER }
-      const expectedUser = { id: userId, name: 'Updated Name', email: '...', role: Role.MANAGER, password: '...', createdAt: new Date(), updatedAt: new Date() }
-      mockUserDb.update.mockResolvedValue(expectedUser as any)
+      // Use PrismaUser type
+      const expectedUser: PrismaUser = { id: userId, name: 'Updated Name', email: '...', role: Role.MANAGER, password: '...', createdAt: new Date(), updatedAt: new Date(), departmentId: null, managerId: null }
+      mockUserDb.update.mockResolvedValue(expectedUser)
       // Act
       const result = await UserService.update(userId, updateData)
       // Assert
@@ -217,8 +242,9 @@ describe('UserService', () => {
     it('should delete a user and return the deleted user', async () => {
       // Arrange
       const userId = 'delete-user-id'
-      const deletedUser = { id: userId, name: 'Deleted User', email: '...', role: Role.EMPLOYEE, password: '...', createdAt: new Date(), updatedAt: new Date() }
-      mockUserDb.delete.mockResolvedValue(deletedUser as any)
+      // Use PrismaUser type
+      const deletedUser: PrismaUser = { id: userId, name: 'Deleted User', email: '...', role: Role.EMPLOYEE, password: '...', createdAt: new Date(), updatedAt: new Date(), departmentId: null, managerId: null }
+      mockUserDb.delete.mockResolvedValue(deletedUser)
       // Act
       const result = await UserService.delete(userId)
       // Assert
@@ -243,8 +269,9 @@ describe('UserService', () => {
       const role = Role.ADMIN
       const page = 1
       const limit = 5
-      const mockAdmins = [{ id: 'a1', name: 'Admin One', role: Role.ADMIN }]
-      mockUserDb.findMany.mockResolvedValue(mockAdmins as any)
+      // Use Partial<PrismaUser> for mock array
+      const mockAdmins: Partial<PrismaUser>[] = [{ id: 'a1', name: 'Admin One', role: Role.ADMIN }]
+      mockUserDb.findMany.mockResolvedValue(mockAdmins)
       // Act
       const result = await UserService.findByRole(role, page, limit)
       // Assert
@@ -270,8 +297,9 @@ describe('UserService', () => {
   describe('findManagers', () => {
     it('should return all users with the MANAGER role', async () => {
       // Arrange
-      const mockManagers = [{ id: 'm1', name: 'Manager A', role: Role.MANAGER }]
-      mockUserDb.findMany.mockResolvedValue(mockManagers as any)
+      // Use Partial<PrismaUser> for mock array
+      const mockManagers: Partial<PrismaUser>[] = [{ id: 'm1', name: 'Manager A', role: Role.MANAGER }]
+      mockUserDb.findMany.mockResolvedValue(mockManagers)
       // Act
       const result = await UserService.findManagers()
       // Assert
@@ -298,8 +326,9 @@ describe('UserService', () => {
       const departmentId = 'dept-123'
       const page = 3
       const limit = 2
-      const mockUsers = [{ id: 'u5', name: 'Dept User', departmentId }]
-      mockUserDb.findMany.mockResolvedValue(mockUsers as any)
+      // Use Partial<PrismaUser> for mock array
+      const mockUsers: Partial<PrismaUser>[] = [{ id: 'u5', name: 'Dept User', departmentId }]
+      mockUserDb.findMany.mockResolvedValue(mockUsers)
       // Act
       const result = await UserService.findByDepartment(departmentId, page, limit)
       // Assert
@@ -326,8 +355,9 @@ describe('UserService', () => {
     it('should return all users reporting to a specific manager', async () => {
       // Arrange
       const managerId = 'manager-xyz'
-      const mockEmployees = [{ id: 'e1', name: 'Emp One', managerId }]
-      mockUserDb.findMany.mockResolvedValue(mockEmployees as any)
+      // Use Partial<PrismaUser> for mock array
+      const mockEmployees: Partial<PrismaUser>[] = [{ id: 'e1', name: 'Emp One', managerId }]
+      mockUserDb.findMany.mockResolvedValue(mockEmployees)
       // Act
       const result = await UserService.findEmployeesByManager(managerId)
       // Assert

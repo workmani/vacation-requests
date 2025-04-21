@@ -65,4 +65,10 @@ tasks/
 # Playwright
 .auth/
 playwright-report/
-playwright/.cache/ 
+playwright/.cache/
+
+# Cursor MCP configuration
+.cursor/mcp.json
+
+# Test results
+test-results/ 
