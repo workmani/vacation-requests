@@ -60,4 +60,9 @@ node_modules/
 # OS specific
 # Task files
 tasks.json
-tasks/ 
+tasks/
+
+# Playwright
+.auth/
+playwright-report/
+playwright/.cache/ 
