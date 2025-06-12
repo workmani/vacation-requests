@@ -1,7 +1,7 @@
 import { CalendarClock, CalendarPlus, Calendar, Clock } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/auth";
 
 // Helper function to check roles (can be moved to utils if used elsewhere)
@@ -126,21 +126,26 @@ function DashboardCard({
   color: string;
 }) {
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="pt-6">
-        <div className={`rounded-full p-3 w-fit ${color}`}>
-          <Icon className="h-6 w-6" />
-        </div>
-        <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </CardContent>
-      <CardFooter className="pt-0">
-        <Button variant="ghost" className="p-0" asChild>
-          <Link href={href} className="w-full">
+    <Card className="hover:shadow-md transition-shadow group">
+      <Link href={href} className="block h-full">
+        <CardContent className="p-4 h-full flex flex-col">
+          <div className="flex items-start gap-3 flex-1">
+            <div className={`rounded-lg p-2 ${color} shrink-0`}>
+              <Icon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-base leading-tight">{title}</h3>
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{description}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 mt-3 text-sm font-medium text-primary group-hover:translate-x-0.5 transition-transform">
             View
-          </Link>
-        </Button>
-      </CardFooter>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </CardContent>
+      </Link>
     </Card>
   );
 }
