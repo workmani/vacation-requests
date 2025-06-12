@@ -2,17 +2,7 @@ import { CalendarClock, CalendarPlus, Calendar, Clock } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { auth } from "@/auth";
-
-// Helper function to check roles (can be moved to utils if used elsewhere)
-const hasRequiredRole = (roles: string[] | undefined): boolean => {
-  if (!roles) return false;
-  return roles.includes("Manager") || roles.includes("Admin");
-};
-
 export default async function Home() {
-  const session = await auth();
-  const userRoles = session?.user?.roles;
 
   return (
     <div className="flex flex-col gap-8">
@@ -40,15 +30,13 @@ export default async function Home() {
           icon={Clock}
           color="bg-amber-100"
         />
-        {hasRequiredRole(userRoles) && (
-          <DashboardCard 
-            title="Team Calendar" 
-            description="View your team's time off schedule" 
-            href="/team-calendar"
-            icon={Calendar}
-            color="bg-purple-100"
-          />
-        )}
+        <DashboardCard 
+          title="My Calendar" 
+          description="View your time off schedule" 
+          href="/calendar"
+          icon={Calendar}
+          color="bg-purple-100"
+        />
       </div>
       
       <Card>
