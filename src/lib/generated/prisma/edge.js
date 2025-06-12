@@ -203,7 +203,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\Nick\\Documents\\Personal Repos\\vacation-request\\src\\lib\\generated\\prisma",
+      "value": "/Users/nickolasworkman/Projects/vacation-requests/src/lib/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -212,17 +212,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\Nick\\Documents\\Personal Repos\\vacation-request\\prisma\\schema.prisma",
+    "sourceFilePath": "/Users/nickolasworkman/Projects/vacation-requests/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../../prisma",
   "clientVersion": "6.6.0",
@@ -231,12 +230,11 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": null
+        "value": "postgresql://postgres:Work14mani%21@localhost:5432/vacation_request?schema=public"
       }
     }
   },

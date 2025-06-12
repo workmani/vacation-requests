@@ -204,7 +204,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\Nick\\Documents\\Personal Repos\\vacation-request\\src\\lib\\generated\\prisma",
+      "value": "/Users/nickolasworkman/Projects/vacation-requests/src/lib/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -213,17 +213,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\Nick\\Documents\\Personal Repos\\vacation-request\\prisma\\schema.prisma",
+    "sourceFilePath": "/Users/nickolasworkman/Projects/vacation-requests/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../../prisma",
   "clientVersion": "6.6.0",
@@ -232,12 +231,11 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": null
+        "value": "postgresql://postgres:Work14mani%21@localhost:5432/vacation_request?schema=public"
       }
     }
   },
@@ -281,8 +279,8 @@ exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
 
 // file annotations for bundling tools to include these files
-path.join(__dirname, "query_engine-windows.dll.node");
-path.join(process.cwd(), "src/lib/generated/prisma/query_engine-windows.dll.node")
+path.join(__dirname, "libquery_engine-darwin-arm64.dylib.node");
+path.join(process.cwd(), "src/lib/generated/prisma/libquery_engine-darwin-arm64.dylib.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "src/lib/generated/prisma/schema.prisma")
