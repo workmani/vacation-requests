@@ -36,9 +36,14 @@ export function Header() {
   const router = useRouter();
   const user = session?.user;
   const roles = user?.roles ?? [];
-  const currentRole = user?.role ?? "EMPLOYEE";
+  const currentRole = user?.role ?? "ADMIN";
 
   const [mockRole, setMockRole] = useState<string>(currentRole);
+
+  // Keep mockRole in sync with session role
+  useEffect(() => {
+    setMockRole(currentRole);
+  }, [currentRole]);
 
   // Auto sign-in for mock auth mode
   useEffect(() => {
@@ -46,19 +51,6 @@ export function Header() {
       signIn("credentials", { redirect: false });
     }
   }, [status]);
-
-  // Sync mock role from cookie on mount
-  useEffect(() => {
-    if (useMockAuth) {
-      const cookieRole = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("mock-role="))
-        ?.split("=")[1];
-      if (cookieRole) {
-        setMockRole(cookieRole);
-      }
-    }
-  }, []);
 
   const handleRoleSwitch = async (newRole: string) => {
     try {
