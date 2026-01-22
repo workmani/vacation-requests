@@ -19,18 +19,24 @@ import {
   isSameDay,
 } from "date-fns";
 
-interface TimeOffRequest {
+interface TeamRequest {
   id: string;
+  type: string;
   startDate: string;
   endDate: string;
-  type: string;
   status: string;
   notes?: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
 }
 
 const getRequestColor = (type: string, status: string) => {
   const normalizedStatus = status.toUpperCase();
   if (normalizedStatus === "PENDING") return "bg-yellow-100 text-yellow-800 border-yellow-200";
+  if (normalizedStatus === "REJECTED") return "bg-gray-100 text-gray-500 border-gray-200";
 
   switch (type.toUpperCase()) {
     case "VACATION":
@@ -50,19 +56,19 @@ const TYPE_LABELS: Record<string, string> = {
   PERSONAL: "Personal",
 };
 
-export default function CalendarPage() {
+export default function TeamCalendarClient() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [requests, setRequests] = useState<TimeOffRequest[]>([]);
+  const [requests, setRequests] = useState<TeamRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchRequests() {
       try {
-        const response = await fetch("/api/requests");
+        const response = await fetch("/api/requests/team");
         if (!response.ok) {
-          throw new Error("Failed to fetch requests");
+          throw new Error("Failed to fetch team requests");
         }
         const data = await response.json();
         setRequests(data.requests || []);
@@ -77,7 +83,10 @@ export default function CalendarPage() {
   }, []);
 
   const getRequestsForDate = (date: Date) => {
-    return requests.filter((request) => {
+    return (requests || []).filter((request) => {
+      // Only show approved requests on calendar (pending ones are in Team Requests)
+      if (request.status.toUpperCase() !== "APPROVED") return false;
+
       const startDate = new Date(request.startDate);
       const endDate = new Date(request.endDate);
       return (
@@ -107,9 +116,9 @@ export default function CalendarPage() {
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold">My Calendar</h1>
+          <h1 className="text-3xl font-bold">Team Calendar</h1>
           <p className="text-muted-foreground mt-2">
-            View your approved and pending time off requests
+            View your team&apos;s approved time off schedule
           </p>
         </div>
         <div className="flex items-center justify-center p-8">
@@ -123,9 +132,9 @@ export default function CalendarPage() {
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold">My Calendar</h1>
+          <h1 className="text-3xl font-bold">Team Calendar</h1>
           <p className="text-muted-foreground mt-2">
-            View your approved and pending time off requests
+            View your team&apos;s approved time off schedule
           </p>
         </div>
         <Card>
@@ -140,9 +149,9 @@ export default function CalendarPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold">My Calendar</h1>
+        <h1 className="text-3xl font-bold">Team Calendar</h1>
         <p className="text-muted-foreground mt-2">
-          View your approved and pending time off requests
+          View your team&apos;s approved time off schedule
         </p>
       </div>
 
@@ -217,12 +226,13 @@ export default function CalendarPage() {
                       {dayRequests.slice(0, 2).map((request) => (
                         <div
                           key={request.id}
-                          className={`text-xs px-1 py-0.5 rounded border ${getRequestColor(
+                          className={`text-xs px-1 py-0.5 rounded border truncate ${getRequestColor(
                             request.type,
                             request.status
                           )}`}
+                          title={request.user.name || request.user.email}
                         >
-                          {request.type.slice(0, 3)}
+                          {request.user.name?.split(" ")[0] || request.user.email.split("@")[0]}
                         </div>
                       ))}
                       {dayRequests.length > 2 && (
@@ -259,10 +269,10 @@ export default function CalendarPage() {
                       )}`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium">{TYPE_LABELS[request.type] || request.type}</span>
-                        <span className="text-sm">{request.status}</span>
+                        <span className="font-medium">{request.user.name || request.user.email}</span>
                       </div>
-                      {request.notes && <p className="text-sm">{request.notes}</p>}
+                      <p className="text-sm">{TYPE_LABELS[request.type] || request.type}</p>
+                      {request.notes && <p className="text-sm text-muted-foreground mt-1">{request.notes}</p>}
                       <p className="text-xs mt-2">
                         {format(new Date(request.startDate), "MMM d")} -{" "}
                         {format(new Date(request.endDate), "MMM d")}
@@ -272,12 +282,12 @@ export default function CalendarPage() {
                 </div>
               ) : (
                 <p className="text-muted-foreground text-sm">
-                  No time off scheduled for this date.
+                  No team members have approved time off on this date.
                 </p>
               )
             ) : (
               <p className="text-muted-foreground text-sm">
-                Click on a date to view details.
+                Click on a date to view team availability.
               </p>
             )}
           </CardContent>
@@ -292,23 +302,19 @@ export default function CalendarPage() {
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-blue-100 border border-blue-200" />
-              <span className="text-sm">Vacation (Approved)</span>
+              <span className="text-sm">Vacation</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-red-100 border border-red-200" />
-              <span className="text-sm">Sick Leave (Approved)</span>
+              <span className="text-sm">Sick Leave</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-purple-100 border border-purple-200" />
-              <span className="text-sm">Personal (Approved)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-yellow-100 border border-yellow-200" />
-              <span className="text-sm">Pending Approval</span>
+              <span className="text-sm">Personal</span>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-} 
+}

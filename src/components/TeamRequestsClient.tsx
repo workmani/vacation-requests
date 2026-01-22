@@ -1,39 +1,112 @@
 "use client";
 
-import { useState } from "react";
-import { Filter, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Filter, User, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-// Define the type for a request (can be refined)
+// Define the type for a request from the API
 interface TeamRequest {
   id: string;
-  employeeName: string;
-  employeeEmail: string;
   type: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   status: string;
-  createdAt: Date;
+  createdAt: string;
+  notes?: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
 }
 
-interface TeamRequestsClientProps {
-  initialRequests: TeamRequest[];
-}
+// Map database enum values to display labels
+const TYPE_LABELS: Record<string, string> = {
+  VACATION: "Vacation",
+  SICK: "Sick Leave",
+  PERSONAL: "Personal",
+};
 
-export default function TeamRequestsClient({ initialRequests }: TeamRequestsClientProps) {
+export default function TeamRequestsClient() {
   const [filter, setFilter] = useState("pending");
+  const [requests, setRequests] = useState<TeamRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRequests = async () => {
+    try {
+      const response = await fetch("/api/requests/team");
+      if (!response.ok) {
+        throw new Error("Failed to fetch team requests");
+      }
+      const data = await response.json();
+      setRequests(data.requests || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load requests");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
   const filteredRequests = filter === 'all'
-    ? initialRequests
-    : initialRequests.filter(req => req.status === filter);
+    ? (requests || [])
+    : (requests || []).filter(req => req.status.toLowerCase() === filter);
+
+  const handleAction = async (requestId: string, action: "APPROVED" | "REJECTED") => {
+    try {
+      const response = await fetch(`/api/requests/${requestId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: action }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `Failed to ${action.toLowerCase()} request`);
+      }
+
+      // Refresh the list after action
+      await fetchRequests();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Action failed");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6">
+        <h1 className="text-3xl font-bold">Team Time Off Requests</h1>
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-6">
+        <h1 className="text-3xl font-bold">Team Time Off Requests</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+            <p className="text-red-600">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-3xl font-bold">Team Time Off Requests</h1>
-      
+
       <div className="flex gap-2">
         {/* Filter Buttons */}
         <Button
@@ -65,7 +138,7 @@ export default function TeamRequestsClient({ initialRequests }: TeamRequestsClie
           Denied
         </Button>
       </div>
-      
+
       <div className="space-y-4">
         {/* Request List */}
         {filteredRequests.length === 0 ? (
@@ -82,14 +155,9 @@ export default function TeamRequestsClient({ initialRequests }: TeamRequestsClie
           filteredRequests.map((request) => (
             <TeamRequestCard
               key={request.id}
-              id={request.id}
-              employeeName={request.employeeName}
-              employeeEmail={request.employeeEmail}
-              type={request.type}
-              startDate={request.startDate}
-              endDate={request.endDate}
-              status={request.status}
-              createdAt={request.createdAt}
+              request={request}
+              onApprove={() => handleAction(request.id, "APPROVED")}
+              onDeny={() => handleAction(request.id, "REJECTED")}
             />
           ))
         )}
@@ -98,71 +166,55 @@ export default function TeamRequestsClient({ initialRequests }: TeamRequestsClie
   );
 }
 
-// TeamRequestCard component remains the same (can be in this file or separate)
-function TeamRequestCard(props: TeamRequest) {
-  const { 
-    id, 
-    employeeName, 
-    employeeEmail, 
-    type, 
-    startDate, 
-    endDate, 
-    status, 
-    createdAt 
-  } = props;
+interface TeamRequestCardProps {
+  request: TeamRequest;
+  onApprove: () => void;
+  onDeny: () => void;
+}
+
+function TeamRequestCard({ request, onApprove, onDeny }: TeamRequestCardProps) {
+  const { type, startDate, endDate, status, createdAt, user } = request;
+  const normalizedStatus = status.toLowerCase();
 
   const statusVariants: Record<string, { variant: "default" | "outline" | "secondary" | "destructive", label: string }> = {
     pending: { variant: "outline", label: "Pending" },
     approved: { variant: "default", label: "Approved" },
-    denied: { variant: "destructive", label: "Denied" },
+    rejected: { variant: "destructive", label: "Denied" },
   };
-  
-  const statusConfig = statusVariants[status] || statusVariants.pending;
-  
-  const handleApprove = () => {
-    // In a real app, this would call an API to update the request
-    alert(`Approved request ${id}`);
-  };
-  
-  const handleDeny = () => {
-    // In a real app, this would call an API to update the request
-    alert(`Denied request ${id}`);
-  };
-  
+
+  const statusConfig = statusVariants[normalizedStatus] || statusVariants.pending;
+
   return (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          {/* ... Employee Info ... */}
-           <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4">
             <User className="h-10 w-10 text-primary" />
             <div>
-              <h3 className="font-medium">{employeeName}</h3>
-              <p className="text-sm text-muted-foreground">{employeeEmail}</p>
+              <h3 className="font-medium">{user.name || "Unknown"}</h3>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
           </div>
           <Badge variant={statusConfig.variant}>
             {statusConfig.label}
           </Badge>
         </div>
-        
+
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* ... Request Details ... */}
-           <div>
+          <div>
             <h4 className="text-sm font-medium">Request Details</h4>
             <p className="text-sm">
-              <span className="font-medium">{type}</span> - {formatDate(startDate)} to {formatDate(endDate)}
+              <span className="font-medium">{TYPE_LABELS[type] || type}</span> - {formatDate(new Date(startDate))} to {formatDate(new Date(endDate))}
             </p>
             <p className="text-xs text-muted-foreground">
-              Requested on {formatDate(createdAt)}
+              Requested on {formatDate(new Date(createdAt))}
             </p>
           </div>
-          
-          {status === 'pending' && (
+
+          {normalizedStatus === 'pending' && (
             <div className="flex items-center justify-end gap-2">
-              {/* ... Approve/Deny Buttons ... */}
-               <Button
-                onClick={handleDeny}
+              <Button
+                onClick={onDeny}
                 variant="outline"
                 size="sm"
                 className="text-red-700 border-red-200 bg-red-100 hover:bg-red-200"
@@ -170,8 +222,8 @@ function TeamRequestCard(props: TeamRequest) {
                 Deny
               </Button>
               <Button
-                onClick={handleApprove}
-                variant="outline" 
+                onClick={onApprove}
+                variant="outline"
                 size="sm"
                 className="text-green-700 border-green-200 bg-green-100 hover:bg-green-200"
               >

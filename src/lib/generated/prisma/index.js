@@ -204,7 +204,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/nickolasworkman/Projects/vacation-requests/src/lib/generated/prisma",
+      "value": "/Users/nickolasworkman/Projects/Personal/vacation-requests/src/lib/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -218,11 +218,12 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/nickolasworkman/Projects/vacation-requests/prisma/schema.prisma",
+    "sourceFilePath": "/Users/nickolasworkman/Projects/Personal/vacation-requests/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null
+    "rootEnvPath": null,
+    "schemaEnvPath": "../../../../.env"
   },
   "relativePath": "../../../../prisma",
   "clientVersion": "6.6.0",

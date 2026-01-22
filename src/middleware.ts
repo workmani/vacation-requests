@@ -1,12 +1,20 @@
 import { auth } from "./auth"; // Import the v5 auth helper
 import { NextResponse } from 'next/server';
 
+// Check if mock auth is enabled - bypass all auth checks
+const useMockAuth = process.env.USE_MOCK_AUTH === "true";
+
 // Define public routes (adjust as needed)
 const publicRoutes = ["/login", "/register", "/about"]; // Add any routes that don't require auth
 const rootRoute = "/"; // Or your main landing page
 const defaultLoginRedirect = "/dashboard"; // Where to redirect after login
 
 export default auth((req) => {
+  // Bypass all auth checks in mock mode
+  if (useMockAuth) {
+    return NextResponse.next();
+  }
+
   const { nextUrl } = req;
   const session = req.auth; // Access session info directly from req.auth
   const isLoggedIn = !!session;

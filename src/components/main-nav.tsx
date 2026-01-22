@@ -8,14 +8,34 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useSession } from "next-auth/react";
 
+// Helper to check roles (supports both single role string and roles array)
+function hasRole(session: ReturnType<typeof useSession>["data"], ...roleNames: string[]) {
+  const user = session?.user;
+  if (!user) return false;
+
+  // Check single role (from mock auth)
+  if (user.role && roleNames.some(r => r.toUpperCase() === user.role?.toUpperCase())) {
+    return true;
+  }
+
+  // Check roles array (from Entra ID)
+  if (user.roles && user.roles.some(r => roleNames.some(rn => rn.toUpperCase() === r.toUpperCase()))) {
+    return true;
+  }
+
+  return false;
+}
+
 export function MainNav() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
 
-  const roles = session?.user?.roles ?? [];
-  const isManager = roles.includes("Manager");
-  const isAdmin = roles.includes("Admin");
+  const isManager = hasRole(session, "Manager", "MANAGER");
+  const isAdmin = hasRole(session, "Admin", "ADMIN");
+  // For POC: Managers (who are not also admins) cannot create requests
+  const isManagerOnly = isManager && !isAdmin;
 
+  // For POC: Managers only see Dashboard + Manager section
   const routes = [
     {
       href: "/",
@@ -23,24 +43,27 @@ export function MainNav() {
       icon: Home,
       active: pathname === "/",
     },
-    {
-      href: "/requests",
-      label: "My Requests",
-      icon: FileText,
-      active: pathname === "/requests" || pathname.startsWith("/requests/"),
-    },
-    {
-      href: "/calendar",
-      label: "Calendar",
-      icon: Calendar,
-      active: pathname === "/calendar",
-    },
-    {
-      href: "/balances",
-      label: "Time Off Balances",
-      icon: Clock,
-      active: pathname === "/balances",
-    },
+    // Only show these for employees and admins (not manager-only users)
+    ...(!isManagerOnly ? [
+      {
+        href: "/requests",
+        label: "My Requests",
+        icon: FileText,
+        active: pathname === "/requests" || pathname.startsWith("/requests/"),
+      },
+      {
+        href: "/calendar",
+        label: "Calendar",
+        icon: Calendar,
+        active: pathname === "/calendar",
+      },
+      {
+        href: "/balances",
+        label: "Time Off Balances",
+        icon: Clock,
+        active: pathname === "/balances",
+      },
+    ] : []),
   ];
 
   const managerRoutes = [
