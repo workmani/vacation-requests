@@ -45,7 +45,21 @@ export async function ensureMockUser(email: string) {
 
   // Check if user already exists
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return existing;
+  if (existing) {
+    // If this is an employee without a manager, try to link them now
+    if (existing.role === Role.EMPLOYEE && !existing.managerId) {
+      const manager = await prisma.user.findFirst({
+        where: { role: Role.MANAGER, departmentId: existing.departmentId },
+      });
+      if (manager) {
+        return prisma.user.update({
+          where: { id: existing.id },
+          data: { managerId: manager.id },
+        });
+      }
+    }
+    return existing;
+  }
 
   // Find the matching mock user config
   const mockConfig = Object.values(MOCK_USERS).find(u => u.email === email);
@@ -87,6 +101,19 @@ export async function ensureMockUser(email: string) {
       managerId,
     },
   });
+
+  // If this is a manager, link any existing unmanaged employees in the same department
+  if (mockConfig.role === Role.MANAGER) {
+    await prisma.user.updateMany({
+      where: {
+        departmentId: department.id,
+        managerId: null,
+        role: Role.EMPLOYEE,
+        id: { not: user.id },
+      },
+      data: { managerId: user.id },
+    });
+  }
 
   // Create time-off balances for current year
   const currentYear = new Date().getFullYear();

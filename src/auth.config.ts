@@ -41,14 +41,14 @@ type MockRole = keyof typeof MOCK_USERS;
 
 // Get the current mock role from cookie
 async function getMockUser() {
-  if (!useMockAuth) return MOCK_USERS.EMPLOYEE;
+  if (!useMockAuth) return MOCK_USERS.ADMIN;
 
   try {
     const cookieStore = await cookies();
     const mockRole = cookieStore.get("mock-role")?.value as MockRole | undefined;
-    return MOCK_USERS[mockRole ?? "EMPLOYEE"];
+    return MOCK_USERS[mockRole ?? "ADMIN"];
   } catch {
-    return MOCK_USERS.EMPLOYEE;
+    return MOCK_USERS.ADMIN;
   }
 }
 
