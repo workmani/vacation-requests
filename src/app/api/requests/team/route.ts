@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { TimeOffRequestService } from "@/lib/services";
-import { UserService } from "@/lib/services";
+import { ensureMockUser } from "@/lib/services/mock-user.service";
 
 // GET /api/requests/team - Get requests from manager's team
 export async function GET(request: NextRequest) {
@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the actual user from database by email
-    const user = await UserService.findByEmail(session.user.email);
+    // Get the actual user from database by email (auto-creates in mock mode)
+    const user = await ensureMockUser(session.user.email);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { TimeOffRequestService } from "@/lib/services";
-import { UserService } from "@/lib/services";
 import { RequestStatus } from "@/lib/generated/prisma";
+import { ensureMockUser } from "@/lib/services/mock-user.service";
 
 // GET /api/requests/[id] - Get a specific request
 export async function GET(
@@ -45,8 +45,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the actual user from database by email
-    const user = await UserService.findByEmail(session.user.email);
+    // Get the actual user from database by email (auto-creates in mock mode)
+    const user = await ensureMockUser(session.user.email);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
