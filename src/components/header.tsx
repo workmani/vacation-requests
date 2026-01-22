@@ -40,6 +40,13 @@ export function Header() {
 
   const [mockRole, setMockRole] = useState<string>(currentRole);
 
+  // Auto sign-in for mock auth mode
+  useEffect(() => {
+    if (useMockAuth && status === "unauthenticated") {
+      signIn("credentials", { redirect: false });
+    }
+  }, [status]);
+
   // Sync mock role from cookie on mount
   useEffect(() => {
     if (useMockAuth) {
@@ -144,7 +151,7 @@ export function Header() {
             </DropdownMenu>
           )}
 
-          {status === "unauthenticated" && (
+          {status === "unauthenticated" && !useMockAuth && (
             <Button size="sm" onClick={() => signIn("azure-ad")}>Sign in</Button>
           )}
         </div>
